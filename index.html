@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Market Making · AZ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: LANDING
+═══════════════════════════════════════ -->
+<div id="screen-landing" class="screen active">
+  <div class="scanline"></div>
+  <div class="landing-bg"></div>
+  <div class="landing-content">
+    <div class="logo-block">
+      <div class="logo-title">MARKET<br/>MAKING</div>
+      <div class="logo-sub">— AZ —</div>
+      <div class="logo-tagline">A real-time market simulation game</div>
+    </div>
+    <div class="landing-buttons">
+      <button class="btn btn-primary pixel-btn" onclick="app.showHostSetup()">
+        <span class="btn-icon">▶</span> HOST A GAME
+      </button>
+      <button class="btn btn-secondary pixel-btn" onclick="app.showJoin()">
+        <span class="btn-icon">◈</span> JOIN A GAME
+      </button>
+    </div>
+    <div class="landing-footer">Up to 10 players · No login needed · Pure market action</div>
+  </div>
+  <div class="grid-overlay"></div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: HOST SETUP
+═══════════════════════════════════════ -->
+<div id="screen-host-setup" class="screen">
+  <div class="scanline"></div>
+  <div class="screen-header">
+    <button class="btn-back pixel-btn-sm" onclick="app.showLanding()">◀ BACK</button>
+    <div class="screen-title">HOST SETUP</div>
+  </div>
+  <div class="setup-container">
+    <div class="setup-card pixel-card">
+      <div class="setup-card-title">CONFIGURE GAME</div>
+      <div class="form-group">
+        <label class="pixel-label">YOUR NICKNAME</label>
+        <input type="text" id="host-nickname" class="pixel-input" placeholder="e.g. Sam" maxlength="15" />
+      </div>
+      <div class="form-group">
+        <label class="pixel-label">FAIR PRICE <span class="label-hint">(secret — used for final payoff)</span></label>
+        <input type="number" id="host-fair-price" class="pixel-input" placeholder="e.g. 25.00" step="0.1" min="0" />
+      </div>
+      <div class="form-group">
+        <label class="pixel-label">NUMBER OF ROUNDS</label>
+        <div class="round-selector">
+          <button class="round-opt pixel-btn-sm" data-rounds="6" onclick="app.selectRounds(6)">6</button>
+          <button class="round-opt pixel-btn-sm" data-rounds="7" onclick="app.selectRounds(7)">7</button>
+          <button class="round-opt pixel-btn-sm active" data-rounds="8" onclick="app.selectRounds(8)">8</button>
+          <button class="round-opt pixel-btn-sm" data-rounds="9" onclick="app.selectRounds(9)">9</button>
+          <button class="round-opt pixel-btn-sm" data-rounds="10" onclick="app.selectRounds(10)">10</button>
+        </div>
+      </div>
+      <button class="btn btn-primary pixel-btn full-width" onclick="app.createGame()">
+        ▶ CREATE GAME
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: JOIN
+═══════════════════════════════════════ -->
+<div id="screen-join" class="screen">
+  <div class="scanline"></div>
+  <div class="screen-header">
+    <button class="btn-back pixel-btn-sm" onclick="app.showLanding()">◀ BACK</button>
+    <div class="screen-title">JOIN GAME</div>
+  </div>
+  <div class="setup-container">
+    <div class="setup-card pixel-card">
+      <div class="setup-card-title">ENTER GAME</div>
+      <div class="form-group">
+        <label class="pixel-label">GAME CODE</label>
+        <input type="text" id="join-code" class="pixel-input code-input" placeholder="XXXXX" maxlength="5"
+               oninput="this.value = this.value.toUpperCase()" />
+      </div>
+      <div class="form-group">
+        <label class="pixel-label">YOUR NICKNAME</label>
+        <input type="text" id="join-nickname" class="pixel-input" placeholder="e.g. Alice" maxlength="15" />
+      </div>
+      <button class="btn btn-secondary pixel-btn full-width" onclick="app.joinGame()">
+        ◈ JOIN GAME
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: LOBBY (Host & Players wait)
+═══════════════════════════════════════ -->
+<div id="screen-lobby" class="screen">
+  <div class="scanline"></div>
+  <div class="screen-header">
+    <div class="game-code-display">GAME CODE: <span id="lobby-code" class="code-highlight">-----</span></div>
+    <div class="screen-title">LOBBY</div>
+  </div>
+  <div class="lobby-container">
+    <div class="lobby-left">
+      <div class="pixel-card">
+        <div class="setup-card-title">PLAYERS CONNECTED</div>
+        <div id="player-list" class="player-list"></div>
+        <div class="player-count-info">Waiting for players... (<span id="player-count">1</span>/10)</div>
+      </div>
+      <div class="pixel-card game-info-card" id="lobby-game-info">
+        <div class="setup-card-title">GAME INFO</div>
+        <div class="info-row"><span>Rounds:</span><span id="lobby-rounds">—</span></div>
+        <div class="info-row"><span>Players:</span><span id="lobby-player-count">—</span></div>
+      </div>
+    </div>
+    <div class="lobby-right">
+      <div class="pixel-card lobby-code-card">
+        <div class="setup-card-title">SHARE THIS CODE</div>
+        <div class="big-code" id="lobby-big-code">-----</div>
+        <div class="code-hint">Share this 5-digit code<br/>with other players</div>
+      </div>
+      <!-- Only visible to host -->
+      <div id="host-controls" class="host-controls" style="display:none">
+        <button class="btn btn-primary pixel-btn full-width" onclick="app.startGame()">
+          ▶ START GAME
+        </button>
+        <div class="host-hint">Need at least 2 players to start</div>
+      </div>
+      <div id="player-waiting-msg" class="waiting-msg">
+        <div class="blink-dot"></div> Waiting for host to start...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: ROUND (Quoting Phase)
+═══════════════════════════════════════ -->
+<div id="screen-round" class="screen">
+  <div class="scanline"></div>
+  <div class="screen-header">
+    <div class="round-badge">ROUND <span id="round-num">1</span>/<span id="round-total">9</span></div>
+    <div class="screen-title">QUOTE PHASE</div>
+    <div class="phase-badge phase-quote">QUOTING</div>
+  </div>
+
+  <div class="round-container">
+    <!-- Quote order column -->
+    <div class="quote-order-panel pixel-card">
+      <div class="panel-title">QUOTE ORDER</div>
+      <div id="quote-order-list" class="quote-order-list"></div>
+    </div>
+
+    <!-- Live quotes column -->
+    <div class="live-quotes-panel pixel-card">
+      <div class="panel-title">LIVE MARKET</div>
+      <div class="market-header-row">
+        <span>PLAYER</span><span>BID</span><span>ASK</span><span>STATUS</span>
+      </div>
+      <div id="live-quotes-list" class="live-quotes-list"></div>
+    </div>
+
+    <!-- My action column -->
+    <div class="my-action-panel pixel-card" id="my-action-panel">
+      <div class="panel-title">YOUR TURN</div>
+      <div id="waiting-turn-msg" class="waiting-turn">
+        <div class="blink-dot"></div> Waiting for your turn...
+      </div>
+      <div id="quote-form" class="quote-form" style="display:none">
+        <div class="form-group">
+          <label class="pixel-label">YOUR BID</label>
+          <input type="number" id="my-bid" class="pixel-input" placeholder="e.g. 24.5" step="0.1" />
+        </div>
+        <div class="form-group">
+          <label class="pixel-label">YOUR ASK</label>
+          <input type="number" id="my-ask" class="pixel-input" placeholder="e.g. 25.5" step="0.1" />
+        </div>
+        <button class="btn btn-primary pixel-btn full-width" onclick="app.submitQuote()">
+          ▶ SUBMIT QUOTE
+        </button>
+        <button class="btn btn-ghost pixel-btn full-width" onclick="app.skipQuote()">
+          ✕ DO NOT QUOTE
+        </button>
+      </div>
+      <div id="already-quoted-msg" class="already-quoted" style="display:none">
+        <div class="check-icon">✓</div>
+        <div>Quote submitted!</div>
+        <div class="small-hint">Waiting for others...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- My position bar -->
+  <div class="position-bar pixel-card">
+    <div class="pos-item"><span class="pos-label">POSITION</span><span id="my-position-r" class="pos-value">0</span></div>
+    <div class="pos-item"><span class="pos-label">COST</span><span id="my-cost-r" class="pos-value">0.00</span></div>
+    <div class="pos-item"><span class="pos-label">PAYOFF</span><span id="my-payoff-r" class="pos-value">—</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: TRADING PHASE
+═══════════════════════════════════════ -->
+<div id="screen-trading" class="screen">
+  <div class="scanline"></div>
+  <div class="screen-header">
+    <div class="round-badge">ROUND <span id="trade-round-num">1</span>/<span id="trade-round-total">9</span></div>
+    <div class="screen-title">TRADING PHASE</div>
+    <div class="timer-display" id="trade-timer">1:00</div>
+  </div>
+
+  <div class="trading-container">
+    <!-- Market board -->
+    <div class="market-board pixel-card">
+      <div class="panel-title">ACTIVE MARKET</div>
+      <div class="market-table-header">
+        <span>PLAYER</span><span>BID</span><span>ASK</span><span>ACTIONS</span>
+      </div>
+      <div id="trading-market-list" class="trading-market-list"></div>
+    </div>
+
+    <!-- Trade log + my stats -->
+    <div class="trade-sidebar">
+      <div class="pixel-card trade-log-panel">
+        <div class="panel-title">TRADE LOG</div>
+        <div id="trade-log" class="trade-log"></div>
+      </div>
+      <div class="pixel-card my-stats-panel">
+        <div class="panel-title">MY STATS</div>
+        <div class="stats-grid">
+          <div class="stat-item"><span class="stat-label">POSITION</span><span id="trade-my-pos" class="stat-value">0</span></div>
+          <div class="stat-item"><span class="stat-label">COST</span><span id="trade-my-cost" class="stat-value">0.00</span></div>
+        </div>
+        <button class="btn btn-ghost pixel-btn full-width" onclick="app.passTrade()">
+          PASS (DO NOTHING)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: ROUND END (brief transition)
+═══════════════════════════════════════ -->
+<div id="screen-round-end" class="screen">
+  <div class="scanline"></div>
+  <div class="round-end-content">
+    <div class="round-end-title">ROUND <span id="end-round-num">1</span> COMPLETE</div>
+    <div class="round-end-subtitle">Calculating payoffs...</div>
+    <div class="round-end-table-wrap pixel-card">
+      <div class="panel-title">STANDINGS AFTER ROUND <span id="end-round-num2">1</span></div>
+      <div id="round-end-standings" class="round-end-standings"></div>
+    </div>
+    <div id="next-round-btn-wrap">
+      <button class="btn btn-primary pixel-btn" id="next-round-btn" onclick="app.advanceRound()" style="display:none">
+        ▶ NEXT ROUND
+      </button>
+      <div id="next-round-waiting" class="waiting-msg">
+        <div class="blink-dot"></div> Waiting for host to advance...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN: FINAL RESULTS
+═══════════════════════════════════════ -->
+<div id="screen-results" class="screen">
+  <div class="scanline"></div>
+  <div class="results-container">
+    <div class="results-title">GAME OVER</div>
+    <div class="results-subtitle">FINAL PAYOFF TABLE</div>
+
+    <!-- Podium top 3 -->
+    <div id="podium" class="podium"></div>
+
+    <!-- Full table -->
+    <div class="pixel-card results-table-card">
+      <div class="panel-title">FINAL STANDINGS</div>
+      <div class="results-table-wrap">
+        <table id="results-table" class="results-table">
+          <thead>
+            <tr>
+              <th>RANK</th><th>PLAYER</th><th>POS</th><th>COST</th><th>R/C</th><th>PAYOFF</th>
+            </tr>
+          </thead>
+          <tbody id="results-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Profit chart -->
+    <div class="pixel-card chart-card">
+      <div class="panel-title">PROFIT BY ROUND</div>
+      <canvas id="profit-chart" width="700" height="280"></canvas>
+    </div>
+
+    <!-- History accordion -->
+    <div class="pixel-card history-card">
+      <div class="panel-title" onclick="app.toggleHistory()" style="cursor:pointer">
+        ROUND HISTORY ▾
+      </div>
+      <div id="history-content" class="history-content" style="display:none">
+        <div id="history-rounds"></div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary pixel-btn" onclick="app.showLanding()" style="margin-top:2rem">
+      ▶ PLAY AGAIN
+    </button>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast"></div>
+
+<!-- Loading overlay -->
+<div id="loading" class="loading-overlay" style="display:none">
+  <div class="loading-box pixel-card">
+    <div class="loading-text blink-dot">LOADING...</div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="js/secrets.js"></script>
+<script src="js/config.js"></script>
+<script src="js/jsonbin.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
