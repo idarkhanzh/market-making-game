@@ -1,9 +1,0 @@
-{
-  "functions": {
-    "api/config.js": { "runtime": "nodejs20.x" }
-  },
-  "routes": [
-    { "src": "/api/config", "dest": "/api/config.js" },
-    { "src": "/(.*)",        "dest": "/$1" }
-  ]
-}
