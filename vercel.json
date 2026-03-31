@@ -1,6 +1,0 @@
-{
-  "routes": [
-    { "src": "/api/config", "dest": "/api/config.js" },
-    { "src": "/(.*)",        "dest": "/$1" }
-  ]
-}
