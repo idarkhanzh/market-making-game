@@ -4,47 +4,31 @@ Real-time multiplayer market-making simulation. Pixel-art style, no signup requi
 
 ---
 
-## 🚀 Deploy to GitHub Pages
+## 🚀 Deploy to Vercel (5 minutes)
 
 ### Step 1 — Get your JSONBin credentials
 
 1. Create a free account at https://jsonbin.io
-2. Go to **Account → API Keys** → copy your **Master Key**
-3. Go to **Bins → Create Bin**, paste `{}` as content, save it
-4. Copy the **Bin ID** from the URL (e.g. `6630abc123def456`)
+2. Go to **Account → API Keys** and copy your **Master Key**
+3. Go to **Bins → Create Bin**, paste `{}` as the content, save it
+4. Copy the **Bin ID** from the URL bar (e.g. `6630abc123def456789`)
 
-### Step 2 — Create your local secrets file
+### Step 2 — Set environment variables in Vercel
 
-```bash
-cp js/secrets.example.js js/secrets.js
-```
+In your Vercel project: **Settings → Environment Variables**, add:
 
-Open `js/secrets.js` and fill in:
+| Name | Value |
+|---|---|
+| `JSONBIN_API_KEY` | Your JSONBin Master Key (`$2a$10$abc...`) |
+| `JSONBIN_INDEX_BIN` | The bin ID you just created (`6630abc123...`) |
 
-```js
-const SECRETS = {
-  JSONBIN_API_KEY:   '$2a$10$your-real-key-here',
-  JSONBIN_INDEX_BIN: 'your-bin-id-here',
-};
-```
-
-`secrets.js` is listed in `.gitignore` — it will never be committed.
-
-### Step 3 — Push to GitHub
+### Step 3 — Deploy
 
 ```bash
-git init
-git add .
-git commit -m "initial commit"
-git remote add origin https://github.com/YOU/market-making-az.git
-git push -u origin main
+npx vercel
 ```
 
-### Step 4 — Enable GitHub Pages
-
-GitHub repo → **Settings → Pages → Source: Deploy from branch → main → / (root)**
-
-Your game is live at `https://YOU.github.io/market-making-az/`
+Done. The `/api/config` serverless function reads those env vars and returns them to the browser at runtime — secrets never live in source code.
 
 ---
 
@@ -52,31 +36,45 @@ Your game is live at `https://YOU.github.io/market-making-az/`
 
 ```
 market-making-az/
-├── index.html
-├── .gitignore
+├── index.html          # All screens in one HTML file
+├── vercel.json         # Vercel routing config
+├── .env.example        # Template — copy to .env.local for local dev
+├── api/
+│   └── config.js       # Serverless function: reads env vars, returns JSON
 ├── css/
 │   └── style.css
 └── js/
-    ├── secrets.js          ← YOU CREATE THIS (gitignored, never committed)
-    ├── secrets.example.js  ← safe template, committed to repo
-    ├── config.js           ← game constants, reads from SECRETS
-    ├── jsonbin.js          ← API wrapper + polling
-    ├── game.js             ← pure game logic & PnL calculations
-    ├── ui.js               ← DOM rendering
-    └── app.js              ← orchestrator
+    ├── config.js       # Game constants (no secrets)
+    ├── jsonbin.js      # JSONBin API wrapper + polling
+    ├── game.js         # Pure game logic & PnL calculations
+    ├── ui.js           # DOM rendering
+    └── app.js          # Orchestrator — fetches /api/config on load
 ```
 
 ---
 
 ## 🏃 Running Locally
 
-Just open `index.html` in a browser — no build step needed.
-
 ```bash
-# Or use any static server:
-python3 -m http.server 8080
-# → http://localhost:8080
+npm i -g vercel          # install CLI once
+cp .env.example .env.local
+# fill in the two values in .env.local
+vercel dev               # serves static + /api/config at localhost:3000
 ```
+
+`vercel dev` is important — it runs the serverless function locally and injects `.env.local`, matching production exactly.
+
+---
+
+## 🎮 How to Play
+
+**Host:** Host a Game → enter nickname + fair price (secret) → share 5-digit code → Start Game
+
+**Players:** Join a Game → enter code + nickname → wait for host
+
+**Each round has two phases:**
+1. **Quoting** — take turns submitting Bid/Ask (or pass). Order rotates each round.
+2. **Trading** — 60-second window to buy at someone's ask or sell at someone's bid (1 trade per player).
 
 ---
 
@@ -86,6 +84,8 @@ python3 -m http.server 8080
 Red/Cre = |pos| × 0.50  (long)  |  |pos| × 0.25  (short)  |  0  (flat)
 Payoff  = (position × fairPrice) − totalCost − Red/Cre
 ```
+
+Verified against all 9 rounds of the reference spreadsheet.
 
 ---
 
@@ -97,10 +97,14 @@ Payoff  = (position × fairPrice) − totalCost − Red/Cre
 | `TRADING_PHASE_SECONDS` | 60 | Trading window |
 | `MAX_PLAYERS` | 10 | Max per game |
 
-Secrets are in `js/secrets.js` only — never in this file.
+Secrets (`JSONBIN_API_KEY`, `JSONBIN_INDEX_BIN`) are env vars only — never in this file.
 
 ---
 
-## ⚠️ Security note
+## 🐛 Troubleshooting
 
-`secrets.js` holds your JSONBin Master Key. Anyone who can read the page source will be able to see it. For a private classroom game this is fine. For a public production deployment, use the Vercel version instead (which keeps the key server-side).
+**"Config error" on load** → Check env vars are set in Vercel and project is redeployed.
+
+**"Game code not found"** → Verify `JSONBIN_INDEX_BIN` points to a real bin on jsonbin.io.
+
+**Slow updates** → Increase `POLL_MS` to `2000` if hitting JSONBin rate limits.
